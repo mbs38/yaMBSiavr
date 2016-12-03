@@ -283,7 +283,7 @@ uint8_t modbusExchangeRegisters(volatile uint16_t *ptrToInArray, uint16_t startA
 			modbusSendMessage(5);
 			return 1;
 		} 
-		//modbusSendException(ecSlaveDeviceFailure); //inanpropriate call of modbusExchangeRegisters
+		//modbusSendException(ecSlaveDeviceFailure); //inapropriate call of modbusExchangeRegisters
 		return 0;
 		} else {
 		modbusSendException(ecIllegalDataValue);
