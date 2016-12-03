@@ -286,7 +286,7 @@ extern uint16_t modbusRequestedAddress(void);
 *  Returns 1 if the crc check is positive, returns 0 if it fails.
 *  Appends two crc bytes to the array.
 */
-extern uint16_t crc16(volatile uint8_t *ptrToArray,uint8_t inputSize);
+extern uint8_t crc16(volatile uint8_t *ptrToArray,uint8_t inputSize);
 
 /* @brief: Handles single/multiple input/coil reading and single/multiple coil writing.
 *

@@ -36,36 +36,43 @@ volatile uint16_t DataPos = 0;
 volatile unsigned char PacketTopIndex = 7;
 volatile unsigned char modBusStaMaStates = 0;
 
-uint8_t modbusGetBusState(void) {
+uint8_t modbusGetBusState(void)
+{
 	return BusState;
 }
 
 #if ADDRESS_MODE == SINGLE_ADR
 volatile unsigned char Address = 0x00;
-uint8_t modbusGetAddress(void) {
+uint8_t modbusGetAddress(void)
+{
 	return Address;
 }
 
-void modbusSetAddress(unsigned char newadr) {
+void modbusSetAddress(unsigned char newadr)
+{
 	Address = newadr;
 }
 #endif
 
 #if PHYSICAL_TYPE == 485
- void transceiver_txen(void) {
+void transceiver_txen(void)
+{
 	TRANSCEIVER_ENABLE_PORT|=(1<<TRANSCEIVER_ENABLE_PIN);
- }
+}
 
- void transceiver_rxen(void) {
+ void transceiver_rxen(void)
+{
 	TRANSCEIVER_ENABLE_PORT&=~(1<<TRANSCEIVER_ENABLE_PIN);
- }
+}
 #endif
 
-/* A fairly simple Modbus compliant 16 Bit CRC algorithm.
-*  Returns 1 if the crc check is positive, returns 0 if it fails.
-*  Appends
+/* @brief: A fairly simple Modbus compliant 16 Bit CRC algorithm.
+*
+*  	Returns 1 if the crc check is positive, returns 0 and saves the calculated CRC bytes
+*	at the end of the data array if it fails.
+*  	
 */
-uint16_t crc16(volatile uint8_t *ptrToArray,uint8_t inputSize) //A standard CRC algorithm
+uint8_t crc16(volatile uint8_t *ptrToArray,uint8_t inputSize) //A standard CRC algorithm
 {
 	uint16_t out=0xffff;
 	uint16_t carry;
@@ -94,7 +101,8 @@ uint16_t crc16(volatile uint8_t *ptrToArray,uint8_t inputSize) //A standard CRC 
 *          amount must not be bigger than 255...
 *
 */
-void listRegisterCopy(volatile uint8_t *source, volatile uint8_t *target, uint8_t amount) {
+void listRegisterCopy(volatile uint8_t *source, volatile uint8_t *target, uint8_t amount)
+{
 	for (uint8_t c=0; c<amount; c++)
 	{
 		*(target+c)=*(source+c);
@@ -105,61 +113,71 @@ void listRegisterCopy(volatile uint8_t *source, volatile uint8_t *target, uint8_
 *
 *
 */
-void listBitCopy(volatile uint8_t *source, uint16_t sourceNr,volatile uint8_t *target, uint16_t targetNr) {
+void listBitCopy(volatile uint8_t *source, uint16_t sourceNr,volatile uint8_t *target, uint16_t targetNr)
+{
 	if(*(source+(sourceNr/8))&(1<<(sourceNr-((sourceNr/8)*8))))
 	{
 		*(target+(targetNr/8))|=(1<<(targetNr-((targetNr/8)*8)));
 	} else *(target+(targetNr/8))&=~(1<<(targetNr-((targetNr/8)*8)));
 }
 
-void modbusReset(void) {
+/* @brief: Back to receiving state.
+*
+*/
+void modbusReset(void)
+{
 	BusState=(1<<TimerActive); //stop receiving (error)
 	modbusTimer=0;
 }
 
-void modbusTickTimer(void) {
-	if (BusState&(1<<TimerActive)) {
+void modbusTickTimer(void)
+{
+	if (BusState&(1<<TimerActive)) 
+	{
 		modbusTimer++;
 		if (BusState&(1<<Receiving)) //we are in receiving mode
 		{
 			if ((modbusTimer==modbusInterCharTimeout)) {
 				BusState|=(1<<GapDetected);
-			} else if ((modbusTimer==modbusInterFrameDelayReceiveEnd)) { //end of message
+			} else if ((modbusTimer==modbusInterFrameDelayReceiveEnd)) { //end of essage
 				BusState=(1<<ReceiveCompleted);
 				#if ADDRESS_MODE == MULTIPLE_ADR
                		 if (crc16(rxbuffer,DataPos-3)) { //perform crc check only. This is for multiple/all address mode.
-	                	//BusState=(1<<ReceiveCompleted);
                 	} else modbusReset();
 				#endif
 				#if ADDRESS_MODE == SINGLE_ADR
 				if (rxbuffer[0]==Address && crc16(rxbuffer,DataPos-3)) { //is the message for us? => perform crc check
-					//BusState=(1<<ReceiveCompleted);
 				} else modbusReset();
 				#endif
-				
 			}	
 		} else if (modbusTimer==modbusInterFrameDelayReceiveStart) BusState|=(1<<BusTimedOut);
 	}
 }
 
-ISR(UART_RECEIVE_INTERRUPT) {
+ISR(UART_RECEIVE_INTERRUPT)
+{
 	unsigned char data;
 	data = UART_DATA;
 	modbusTimer=0; //reset timer
-	if (!(BusState & (1<<ReceiveCompleted)) && !(BusState & (1<<TransmitRequested)) && !(BusState & (1<<Transmitting)) && (BusState & (1<<Receiving)) && !(BusState & (1<<BusTimedOut))) { // // 
+	if (!(BusState & (1<<ReceiveCompleted)) && !(BusState & (1<<TransmitRequested)) && !(BusState & (1<<Transmitting)) && (BusState & (1<<Receiving)) && !(BusState & (1<<BusTimedOut)))
+	{
 		if (DataPos>MaxFrameIndex) modbusReset();
-	    else {
+	    	else
+		{
 			rxbuffer[DataPos]=data;
 			DataPos++; //TODO: maybe prevent this from exceeding 255?
 		}	    
-    } else if (!(BusState & (1<<ReceiveCompleted)) && !(BusState & (1<<TransmitRequested)) && !(BusState & (1<<Transmitting)) && !(BusState & (1<<Receiving)) && (BusState & (1<<BusTimedOut))) { //) {
-			 rxbuffer[0]=data;
-			 BusState=((1<<Receiving)|(1<<TimerActive));
-			 DataPos=1;
-    }
+    	} else 
+	if (!(BusState & (1<<ReceiveCompleted)) && !(BusState & (1<<TransmitRequested)) && !(BusState & (1<<Transmitting)) && !(BusState & (1<<Receiving)) && (BusState & (1<<BusTimedOut))) 
+	{ 
+		 rxbuffer[0]=data;
+		 BusState=((1<<Receiving)|(1<<TimerActive));
+		 DataPos=1;
+    	}
 }
 
-ISR(UART_TRANSMIT_INTERRUPT) {
+ISR(UART_TRANSMIT_INTERRUPT)
+{
 	BusState&=~(1<<TransmitRequested);
 	BusState|=(1<<Transmitting);
 	UART_DATA=rxbuffer[DataPos];
@@ -169,7 +187,8 @@ ISR(UART_TRANSMIT_INTERRUPT) {
 	}
 }
 
-ISR(UART_TRANSMIT_COMPLETE_INTERRUPT) { //Sobald Stopbit übertragen wurde RS485-Transceiver wieder auf empfangen umstellen
+ISR(UART_TRANSMIT_COMPLETE_INTERRUPT)
+{
 	#if PHYSICAL_TYPE == 485
 	transceiver_rxen();
 	#endif
@@ -196,9 +215,10 @@ void modbusInit(void)
 *         Arguments: - packtop: Position of the last byte containing data.
 *                               modbusSendException is a good usage example.
 */
-void modbusSendMessage(unsigned char packtop) {
-	PacketTopIndex=packtop+2; //diff: +2
-	crc16(rxbuffer,packtop); //diff: alt: -1, neu +1
+void modbusSendMessage(unsigned char packtop)
+{
+	PacketTopIndex=packtop+2;
+	crc16(rxbuffer,packtop);
 	BusState|=(1<<TransmitRequested);
 	DataPos=0;
 	#if PHYSICAL_TYPE == 485
@@ -208,27 +228,42 @@ void modbusSendMessage(unsigned char packtop) {
 	BusState&=~(1<<ReceiveCompleted);
 }
 
-void modbusSendException(unsigned char exceptionCode) {
+/* @brief: Sends an exception response.
+*
+*         Arguments: - exceptionCode
+*                              
+*/
+void modbusSendException(unsigned char exceptionCode)
+{
 	rxbuffer[1]|=(1<<7); //setting MSB of the function code (the exception flag)
 	rxbuffer[2]=exceptionCode; //Exceptioncode. Also the last byte containing data
 	modbusSendMessage(2);
 }
 
-uint16_t modbusRequestedAmount(void) {
+
+/* @brief:  Returns the amount of requested data objects (coils, discretes, registers)
+*
+*/
+uint16_t modbusRequestedAmount(void)
+{
 	return (rxbuffer[5]|(rxbuffer[4]<<8));
 }
 
-uint16_t modbusRequestedAddress(void) {
+/* @brief: Returns the address of the first requested data object (coils, discretes, registers)
+*
+*/
+uint16_t modbusRequestedAddress(void)
+{
 	return (rxbuffer[3]|(rxbuffer[2]<<8));
 }
 
 /* @brief: copies a single or multiple bytes from one array of bytes to an array of 16-bit-words
-*          
 *
 */
-void intToModbusRegister(volatile uint16_t *inreg, volatile uint8_t *outreg, uint8_t amount) {
+void intToModbusRegister(volatile uint16_t *inreg, volatile uint8_t *outreg, uint8_t amount)
+{
 	for (uint8_t c=0; c<amount; c++)
-	{	
+	{
 			*(outreg+c*2) = (uint8_t)(*(inreg+c) >> 8);
 			*(outreg+1+c*2) = (uint8_t)(*(inreg+c));
 	}
@@ -236,9 +271,9 @@ void intToModbusRegister(volatile uint16_t *inreg, volatile uint8_t *outreg, uin
 
 /* @brief: copies a single or multiple 16-bit-words from one array of integers to an array of bytes
 *
-*
 */
-void modbusRegisterToInt(volatile uint8_t *inreg, volatile uint16_t *outreg, uint8_t amount) {
+void modbusRegisterToInt(volatile uint8_t *inreg, volatile uint16_t *outreg, uint8_t amount)
+{
 	for (uint8_t c=0; c<amount; c++)
 	{
 		*(outreg+c) = (*(inreg+c*2) << 8) + *(inreg+1+c*2);
@@ -252,7 +287,8 @@ void modbusRegisterToInt(volatile uint8_t *inreg, volatile uint16_t *outreg, uin
 *                    - size: input array size in the requested format (16bit-registers)
 *
 */
-uint8_t modbusExchangeRegisters(volatile uint16_t *ptrToInArray, uint16_t startAddress, uint16_t size) {
+uint8_t modbusExchangeRegisters(volatile uint16_t *ptrToInArray, uint16_t startAddress, uint16_t size)
+{
 	uint16_t requestedAmount = modbusRequestedAmount();
 	uint16_t requestedAdr = modbusRequestedAddress();
 	if (rxbuffer[1]==fcPresetSingleRegister) requestedAmount=1;
@@ -298,11 +334,13 @@ uint8_t modbusExchangeRegisters(volatile uint16_t *ptrToInArray, uint16_t startA
 *                    - size: input array size in the requested format (bits)
 *
 */
-uint8_t modbusExchangeBits(volatile uint8_t *ptrToInArray, uint16_t startAddress, uint16_t size) {
+uint8_t modbusExchangeBits(volatile uint8_t *ptrToInArray, uint16_t startAddress, uint16_t size)
+{
 	uint16_t requestedAmount = modbusRequestedAmount();
 	uint16_t requestedAdr = modbusRequestedAddress();
 	if (rxbuffer[1]==fcForceSingleCoil) requestedAmount=1;
-	if ((requestedAdr>=startAddress) && ((startAddress+size)>=(requestedAmount+requestedAdr))) {
+	if ((requestedAdr>=startAddress) && ((startAddress+size)>=(requestedAmount+requestedAdr)))
+	{
 		if ((rxbuffer[1]==fcReadInputStatus) || (rxbuffer[1]==fcReadCoilStatus))
 		{
 			if (requestedAmount<=((MaxFrameIndex-4)*8)) //message buffer big enough?
@@ -340,7 +378,8 @@ uint8_t modbusExchangeBits(volatile uint8_t *ptrToInArray, uint16_t startAddress
 		}
 		//modbusSendException(ecSlaveDeviceFailure); //inanpropriate call of modbusExchangeBits
 		return 0;
-	} else {
+	} else
+	{
 		modbusSendException(ecIllegalDataValue);
 		return 0;
 	}
