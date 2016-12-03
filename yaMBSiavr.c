@@ -139,7 +139,7 @@ void modbusTickTimer(void)
 		{
 			if ((modbusTimer==modbusInterCharTimeout)) {
 				BusState|=(1<<GapDetected);
-			} else if ((modbusTimer==modbusInterFrameDelayReceiveEnd)) { //end of essage
+			} else if ((modbusTimer==modbusInterFrameDelayReceiveEnd)) { //end of message
 				BusState=(1<<ReceiveCompleted);
 				#if ADDRESS_MODE == MULTIPLE_ADR
                		 if (crc16(rxbuffer,DataPos-3)) { //perform crc check only. This is for multiple/all address mode.
