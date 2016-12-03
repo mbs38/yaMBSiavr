@@ -125,14 +125,15 @@ void modbusTickTimer(void) {
 			if ((modbusTimer==modbusInterCharTimeout)) {
 				BusState|=(1<<GapDetected);
 			} else if ((modbusTimer==modbusInterFrameDelayReceiveEnd)) { //end of message
+				BusState=(1<<ReceiveCompleted);
 				#if ADDRESS_MODE == MULTIPLE_ADR
-                if (crc16(rxbuffer,DataPos-3)) { //perform crc check only. This is for multiple/all address mode.
-	                BusState=(1<<ReceiveCompleted);
-                } else modbusReset();
+               		 if (crc16(rxbuffer,DataPos-3)) { //perform crc check only. This is for multiple/all address mode.
+	                	//BusState=(1<<ReceiveCompleted);
+                	} else modbusReset();
 				#endif
 				#if ADDRESS_MODE == SINGLE_ADR
 				if (rxbuffer[0]==Address && crc16(rxbuffer,DataPos-3)) { //is the message for us? => perform crc check
-					BusState=(1<<ReceiveCompleted);
+					//BusState=(1<<ReceiveCompleted);
 				} else modbusReset();
 				#endif
 				
@@ -269,7 +270,7 @@ uint8_t modbusExchangeRegisters(volatile uint16_t *ptrToInArray, uint16_t startA
 		}
 		else if (rxbuffer[1]==fcPresetMultipleRegisters)
 		{
-			if (((rxbuffer[6]*2)>=requestedAmount) && ((DataPos-9)==rxbuffer[6])) //enough data received?
+			if (((rxbuffer[6])>=requestedAmount*2) && ((DataPos-9)>=rxbuffer[6])) //enough data received?
 			{
 				modbusRegisterToInt(rxbuffer+7,ptrToInArray+(unsigned char)(requestedAdr-startAddress),(unsigned char)(requestedAmount));
 				modbusSendMessage(5);
@@ -322,7 +323,7 @@ uint8_t modbusExchangeBits(volatile uint8_t *ptrToInArray, uint16_t startAddress
 		}
 		else if (rxbuffer[1]==fcForceMultipleCoils)
 		{
-			if (((rxbuffer[6]*8)>=requestedAmount) && ((DataPos-9)==rxbuffer[6])) //enough data received?
+			if (((rxbuffer[6]*8)>=requestedAmount) && ((DataPos-9)>=rxbuffer[6])) //enough data received?
 			{
 				for (uint16_t c = 0; c<requestedAmount; c++)
 				{
