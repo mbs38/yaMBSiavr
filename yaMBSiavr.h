@@ -106,6 +106,28 @@ LICENSE:
 */
 #define Baud 64 //38400@20e6Hz
 
+#elif defined(__AVR_ATtiny441__)
+#define UART_TRANSMIT_COMPLETE_INTERRUPT USART0_TX_vect
+#define UART_RECEIVE_INTERRUPT   USART0_RX_vect
+#define UART_TRANSMIT_INTERRUPT  USART0_UDRE_vect
+#define UART_STATUS   UCSR0A
+#define UART_CONTROL  UCSR0B
+#define UART_DATA     UDR0
+#define UART_UDRIE    UDRIE0
+#define UCSRC UCSR0C
+#define RXCIE RXCIE0
+#define TXCIE TXCIE0
+#define RXEN RXEN0
+#define TXEN TXEN0
+#define UCSZ0 UCSZ00
+#define U2X U2X0
+#define UBRRH UBRR0H
+#define UBRRL UBRR0L
+/*
+ * Change this value if you are using a different frequency and/or
+ * different baudrate.
+*/
+#define Baud 64 //38400@20e6Hz
 
 #elif defined(__AVR_ATmega8__)|| defined(__AVR_ATmega16__) || defined(__AVR_ATmega32__) || defined(__AVR_ATmega323__)
 #define UART_TRANSMIT_COMPLETE_INTERRUPT USART_TXC_vect
