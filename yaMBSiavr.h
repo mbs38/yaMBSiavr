@@ -51,6 +51,9 @@ THE POSSIBILITY OF SUCH DAMAGE.
  *  @author Max Brueggemann www.maxbrueggemann.de
  */
 
+/* define baudrate of modbus */
+#define BAUD 38400L 
+
 /*
 * Definitions for transceiver enable pin.
 */
@@ -72,11 +75,6 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #define UART_CONTROL  UCSRB
 #define UART_DATA     UDR
 #define UART_UDRIE    UDRIE
-/*
- * Change this value if you are using a different frequency and/or
- * different baudrate.
-*/
-#define Baud 25 //38400@16e6Hz
 
 #elif defined(__AVR_ATmega164P__)
 #define UART_TRANSMIT_COMPLETE_INTERRUPT USART1_TX_vect
@@ -95,11 +93,6 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #define U2X U2X1
 #define UBRRH UBRR1H
 #define UBRRL UBRR1L
-/*
- * Change this value if you are using a different frequency and/or
- * different baudrate.
-*/
-#define Baud 64 //38400@20e6Hz
 
 #elif defined(__AVR_ATmega168PA__)|(__AVR_ATmega88PA__)|(__AVR_ATmega328PA__)
 #define UART_TRANSMIT_COMPLETE_INTERRUPT USART_TX_vect
@@ -141,11 +134,6 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #define U2X U2X0
 #define UBRRH UBRR0H
 #define UBRRL UBRR0L
-/*
- * Change this value if you are using a different frequency and/or
- * different baudrate.
-*/
-#define Baud 64 //38400@20e6Hz
 
 #elif defined(__AVR_ATmega8__)|| defined(__AVR_ATmega16__) || defined(__AVR_ATmega32__) || defined(__AVR_ATmega323__)
 #define UART_TRANSMIT_COMPLETE_INTERRUPT USART_TXC_vect
@@ -156,17 +144,15 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #define UART_DATA     UDR
 #define UART_UDRIE    UDRIE
 
-/*
- * Change this value if you are using a different frequency and/or
- * different baudrate.
-*/
-#define Baud 25 //38400@8e6Hz double speed mode
-
-
 #else
 #error "no definition available"
 #endif
 
+#ifndef F_CPU
+#error " F_CPU not defined "
+#else
+   #define UBRR (F_CPU / 8 / BAUD ) -1 
+#endif /* F_CPU */
 /*
  * Available address modes.
 */
@@ -345,3 +331,4 @@ extern uint8_t modbusExchangeBits(volatile uint8_t *ptrToInArray, uint16_t start
 *
 */
 extern uint8_t modbusExchangeRegisters(volatile uint16_t *ptrToInArray, uint16_t startAddress, uint16_t size);
+
