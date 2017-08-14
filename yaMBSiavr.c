@@ -214,12 +214,15 @@ ISR(UART_TRANSMIT_COMPLETE_INTERRUPT)
 
 void modbusInit(void)
 {
-	UBRRH = (unsigned char)(Baud>>8);
-	UBRRL = (unsigned char)Baud;
-	UART_CONTROL = (1<<RXCIE)|(1<<RXEN)|(1<<TXEN); // USART receiver and transmitter and receive complete interrupt
-	UART_STATUS |= (1<<U2X); //double speed mode. 
-	UCSRC = (3<<UCSZ0); //Frame Size
-	UART_CONTROL|=(1<<TXCIE); //Transmit Complete Interrupt an
+	UBRRH = (unsigned char)(UBRR>>8);
+	UBRRL = (unsigned char)UBRR;
+	UART_STATUS = (1<<U2X); //double speed mode.
+#ifdef URSEL   // if UBRRH and UCSRC share the same I/O location , e.g. ATmega8
+	UCSRC = (1<<URSEL)|(3<<UCSZ0); //Frame Size
+#else
+   UCSRC = (3<<UCSZ0); //Frame Size
+#endif
+	UART_CONTROL = (1<<TXCIE)|(1<<RXCIE)|(1<<RXEN)|(1<<TXEN); // USART receiver and transmitter and receive complete interrupt
 	#if PHYSICAL_TYPE == 485
 	TRANSCEIVER_ENABLE_PORT_DDR|=(1<<TRANSCEIVER_ENABLE_PIN);
 	transceiver_rxen();
