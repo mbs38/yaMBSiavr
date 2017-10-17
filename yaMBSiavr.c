@@ -404,26 +404,3 @@ uint8_t modbusExchangeBits(volatile uint8_t *ptrToInArray, uint16_t startAddress
 		return 0;
 	}
 }
-
-/* @brief: Handles function code "report slave id".
-*
-*		  Arguments: - in: MUST BE NULL-TERMINATED and shorter than MaxFrameIndex-4
-*						   (without NULL-Byte, the NULL-Byte is not transmitted).
-*						   Pointer to the user's data array containing user specific
-*					       information, typically a string (hence the null termination).
-*						   The last byte should (according to spec) contain the 'run indication"
-*						   (running: 0xFF, not running: 0x00). This seems to be originating
-*						   from PLC terminology and is often omitted nowadays.
-*
-*  @example: char myDeviceDescription[] = {"modbus capable device that is always running V1.0\0xFF\0x00"}
-*			 modbusSendSlaveID(myDeviceDescription);
-*/
-void modbusSendSlaveID(char *in) {
-	uint8_t c = 0;
-	for (;(c<(MaxFrameIndex-2)) && in[c]!=0;c++)
-	{
-		rxbuffer[c+3]=in[c];
-	}
-	rxbuffer[2]=c+1; //byte count
-	modbusSendMessage(c+2);
-}
