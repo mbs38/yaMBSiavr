@@ -319,7 +319,7 @@ uint8_t modbusExchangeRegisters(volatile uint16_t *ptrToInArray, uint16_t startA
 			if ((requestedAmount*2)<=(MaxFrameIndex-4)) //message buffer big enough?
 			{
 				rxbuffer[2]=(unsigned char)(requestedAmount*2);
-				intToModbusRegister(ptrToInArray+(unsigned char)(requestedAdr-startAddress),rxbuffer+3,rxbuffer[2]);
+				intToModbusRegister(ptrToInArray+(unsigned char)(requestedAdr-startAddress),rxbuffer+3,requestedAmount);
 				modbusSendMessage(2+rxbuffer[2]);
 				return 1;
 			} else modbusSendException(ecIllegalDataValue);
