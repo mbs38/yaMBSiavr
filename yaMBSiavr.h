@@ -174,7 +174,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 /*
 #define modbusBaudrate 38400
 #define modbusBlocksize 10
-#define modbusBlockTime ((float)modbusBlocksize*1000000)/((float) modbusBaudrate) //is 260 für 38400
+#define modbusBlockTime ((float)modbusBlocksize*1000000)/((float) modbusBaudrate) //is 260 for 38400
 #define timerISROccurenceTime 102
 
 #define TimeoutStartOfMessage  (uint16_t)(modbusBlockTime*3.5/(float)timerISROccurenceTime)
@@ -294,7 +294,7 @@ void modbusReset(void);
 extern uint8_t modbusGetBusState(void);
 
 /**
- * @brief    Call every 100µs using a timer ISR.
+ * @brief    Call every 100us using a timer ISR.
  */
 extern void modbusTickTimer(void);
 
