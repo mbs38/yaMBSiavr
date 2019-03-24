@@ -44,14 +44,6 @@ ISR(TIMER0_OVF_vect) { //this ISR is called 9765.625 times per second
 	modbusTickTimer();
 }
 
-void modbusGet(void) {
-	if (modbusGetBusState() & (1<<ReceiveCompleted))
-	{
-		modbusSendException(0x01);
-	}
-}
-
-
 void readReg(uint8_t slaveid, uint16_t address, uint8_t amount) {
         _delay_ms(2);
         rxbuffer[0]=slaveid;
