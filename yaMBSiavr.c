@@ -319,7 +319,7 @@ uint8_t modbusExchangeRegisters(volatile uint16_t *ptrToInArray, uint16_t startA
 			if ((requestedAmount*2)<=(MaxFrameIndex-4)) //message buffer big enough?
 			{
 				rxbuffer[2]=(unsigned char)(requestedAmount*2);
-				intToModbusRegister(ptrToInArray+(unsigned char)(requestedAdr-startAddress),rxbuffer+3,requestedAmount);
+				intToModbusRegister(ptrToInArray+(requestedAdr-startAddress),rxbuffer+3,requestedAmount);
 				modbusSendMessage(2+rxbuffer[2]);
 				return 1;
 			} else modbusSendException(ecIllegalDataValue);
@@ -328,14 +328,14 @@ uint8_t modbusExchangeRegisters(volatile uint16_t *ptrToInArray, uint16_t startA
 		{
 			if (((rxbuffer[6])>=requestedAmount*2) && ((DataPos-9)>=rxbuffer[6])) //enough data received?
 			{
-				modbusRegisterToInt(rxbuffer+7,ptrToInArray+(unsigned char)(requestedAdr-startAddress),(unsigned char)(requestedAmount));
+				modbusRegisterToInt(rxbuffer+7,ptrToInArray+(requestedAdr-startAddress),(unsigned char)(requestedAmount));
 				modbusSendMessage(5);
 				return 1;
 			} else modbusSendException(ecIllegalDataValue);//too few data bytes received
 		}
 		else if (rxbuffer[1]==fcPresetSingleRegister)
 		{
-			modbusRegisterToInt(rxbuffer+4,ptrToInArray+(unsigned char)(requestedAdr-startAddress),1);
+			modbusRegisterToInt(rxbuffer+4,ptrToInArray+(requestedAdr-startAddress),1);
 			modbusSendMessage(5);
 			return 1;
 		} 
