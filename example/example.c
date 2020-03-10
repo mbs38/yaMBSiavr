@@ -75,45 +75,45 @@ void modbusGet(void) {
 	{
 		switch(rxbuffer[1]) {
 			case fcReadCoilStatus: {
-				modbusExchangeBits(&outstate,0,8);
+				modbusExchangeBits(&outstate,1,8);
 			}
 			break;
 			
 			case fcReadInputStatus: {
 				volatile uint8_t inps = ReadIns();
-				modbusExchangeBits(&inps,0,8);
+				modbusExchangeBits(&inps,10001,8);
 			}
 			break;
 			
 			case fcReadHoldingRegisters: {
-				modbusExchangeRegisters(holdingRegisters,0,4);
+				modbusExchangeRegisters(holdingRegisters,40001,4);
 			}
 			break;
 			
 			case fcReadInputRegisters: {
-				modbusExchangeRegisters(inputRegisters,0,4);
+				modbusExchangeRegisters(inputRegisters,30001,4);
 			}
 			break;
 			
 			case fcForceSingleCoil: {
-				modbusExchangeBits(&outstate,0,8);
+				modbusExchangeBits(&outstate,1,8);
 				SetOuts(outstate);
 			}
 			break;
 			
 			case fcPresetSingleRegister: {
-				modbusExchangeRegisters(holdingRegisters,0,4);
+				modbusExchangeRegisters(holdingRegisters,40001,4);
 			}
 			break;
 			
 			case fcForceMultipleCoils: {
-				modbusExchangeBits(&outstate,0,8);
+				modbusExchangeBits(&outstate,1,8);
 				SetOuts(outstate);
 			}
 			break;
 			
 			case fcPresetMultipleRegisters: {
-				modbusExchangeRegisters(holdingRegisters,0,4);
+				modbusExchangeRegisters(holdingRegisters,40001,4);
 			}
 			break;
 			
