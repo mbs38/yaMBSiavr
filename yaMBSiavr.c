@@ -120,10 +120,7 @@ uint8_t crc16(volatile uint8_t *ptrToArray,uint8_t inputSize) //A standard CRC a
 */
 void listRegisterCopy(volatile uint8_t *source, volatile uint8_t *target, uint8_t amount)
 {
-	for (uint8_t c=0; c<amount; c++)
-	{
-		*(target+c)=*(source+c);
-	}
+	memcpy(target,source,amount);
 }
 
 /* @brief: copies a single bit from one char to another char (or arrays thereof)
