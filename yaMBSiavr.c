@@ -338,7 +338,6 @@ void modbusRegisterToInt(volatile uint8_t *inreg, volatile uint16_t *outreg, uin
 */
 uint8_t modbusExchangeRegisters(volatile uint16_t *ptrToInArray, uint16_t startAddress, uint16_t size)
 {
-	if (rxbuffer[1]==fcPresetSingleRegister) modbusDataAmount=1;
 	if ((modbusDataLocation>=startAddress) && ((startAddress+size)>=(modbusDataAmount+modbusDataLocation))) {
 		
 		if ((rxbuffer[1]==fcReadHoldingRegisters) || (rxbuffer[1]==fcReadInputRegisters) )
@@ -383,7 +382,6 @@ uint8_t modbusExchangeRegisters(volatile uint16_t *ptrToInArray, uint16_t startA
 */
 uint8_t modbusExchangeBits(volatile uint8_t *ptrToInArray, uint16_t startAddress, uint16_t size)
 {
-	if (rxbuffer[1]==fcForceSingleCoil) modbusDataAmount=1;
 	if ((modbusDataLocation>=startAddress) && ((startAddress+size)>=(modbusDataAmount+modbusDataLocation)))
 	{
 		if ((rxbuffer[1]==fcReadInputStatus) || (rxbuffer[1]==fcReadCoilStatus))
