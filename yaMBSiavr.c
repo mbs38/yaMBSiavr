@@ -92,10 +92,6 @@ uint8_t modbusIsRangeInRange(uint16_t startAdr, uint16_t lastAdr)
 
 uint8_t modbusGetBusState(void)
 {
-	if (BusState & (1<<ReceiveCompleted))
-	{
-		modbusSaveLocation();
-	}
 	return BusState;
 }
 
@@ -186,13 +182,16 @@ void modbusTickTimer(void)
 			if ((modbusTimer==modbusInterCharTimeout)) {
 				BusState|=(1<<GapDetected);
 			} else if ((modbusTimer==modbusInterFrameDelayReceiveEnd)) { //end of message
-				BusState=(1<<ReceiveCompleted);
 				#if ADDRESS_MODE == MULTIPLE_ADR
                		 if (crc16(rxbuffer,DataPos-3)) { //perform crc check only. This is for multiple/all address mode.
-                	} else modbusReset();
+				modbusSaveLocation();
+				BusState=(1<<ReceiveCompleted);
+			 } else modbusReset();
 				#endif
 				#if ADDRESS_MODE == SINGLE_ADR
 				if (rxbuffer[0]==Address && crc16(rxbuffer,DataPos-3)) { //is the message for us? => perform crc check
+					modbusSaveLocation();
+					BusState=(1<<ReceiveCompleted);
 				} else modbusReset();
 				#endif
 			}	
