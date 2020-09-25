@@ -1,6 +1,5 @@
 #ifndef yaMBIavr_H
 #define yaMBIavr_H
-#endif
 /************************************************************************
 Title:    Yet another (small) Modbus (server) implementation for the avr.
 Author:   Max Brueggemann
@@ -38,7 +37,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 THE POSSIBILITY OF SUCH DAMAGE.
     
 ************************************************************************/
-
+#include <avr/io.h>
 /** 
  *  @code #include <yaMBSIavr.h> @endcode
  * 
@@ -94,7 +93,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #define UBRRH UBRR1H
 #define UBRRL UBRR1L
 
-#elif defined(__AVR_ATmega168PA__)|(__AVR_ATmega88PA__)|(__AVR_ATmega328PA__)
+#elif defined(__AVR_ATmega168PA__)|(__AVR_ATmega88PA__)|(__AVR_ATmega328P__)|(__AVR_ATmega168P__)|(__AVR_ATmega88P__)
 #define UART_TRANSMIT_COMPLETE_INTERRUPT USART_TX_vect
 #define UART_RECEIVE_INTERRUPT   USART_RX_vect
 #define UART_TRANSMIT_INTERRUPT  USART_UDRE_vect
@@ -111,11 +110,24 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #define U2X U2X0
 #define UBRRH UBRR0H
 #define UBRRL UBRR0L
-/*
- * Change this value if you are using a different frequency and/or
- * different baudrate.
-*/
-#define Baud 64 //38400@20e6Hz
+
+#elif defined(__AVR_ATmega328PB__)
+#define UART_TRANSMIT_COMPLETE_INTERRUPT USART0_TX_vect
+#define UART_RECEIVE_INTERRUPT   USART0_RX_vect
+#define UART_TRANSMIT_INTERRUPT  USART0_UDRE_vect
+#define UART_STATUS   UCSR0A
+#define UART_CONTROL  UCSR0B
+#define UART_DATA     UDR0
+#define UART_UDRIE    UDRIE0
+#define UCSRC UCSR0C
+#define RXCIE RXCIE0
+#define TXCIE TXCIE0
+#define RXEN RXEN0
+#define TXEN TXEN0
+#define UCSZ0 UCSZ00
+#define U2X U2X0
+#define UBRRH UBRR0H
+#define UBRRL UBRR0L
 
 #elif defined(__AVR_ATtiny441__)
 #define UART_TRANSMIT_COMPLETE_INTERRUPT USART0_TX_vect
@@ -184,7 +196,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 /*
 #define modbusBaudrate 38400
 #define modbusBlocksize 10
-#define modbusBlockTime ((float)modbusBlocksize*1000000)/((float) modbusBaudrate) //is 260 f�r 38400
+#define modbusBlockTime ((float)modbusBlocksize*1000000)/((float) modbusBaudrate) //is 260 for 38400
 #define timerISROccurenceTime 102
 
 #define TimeoutStartOfMessage  (uint16_t)(modbusBlockTime*3.5/(float)timerISROccurenceTime)
@@ -304,7 +316,7 @@ void modbusReset(void);
 extern uint8_t modbusGetBusState(void);
 
 /**
- * @brief    Call every 100�s using a timer ISR.
+ * @brief    Call every 100us using a timer ISR.
  */
 extern void modbusTickTimer(void);
 
@@ -341,3 +353,22 @@ extern uint8_t modbusExchangeBits(volatile uint8_t *ptrToInArray, uint16_t start
 *
 */
 extern uint8_t modbusExchangeRegisters(volatile uint16_t *ptrToInArray, uint16_t startAddress, uint16_t size);
+
+/* @brief: returns 1 if data location adr is touched by current command
+*
+*         Arguments: - adr: address of the data object
+*
+*/
+extern uint8_t modbusIsInRange(uint16_t adr);
+
+/* @brief: returns 1 if range of data locations is touched by current command
+*
+*         Arguments: - startAdr: address of first data object in range
+*                    - lastAdr: address of last data object in range
+*
+*/
+extern uint8_t modbusIsRangeInRange(uint16_t startAdr, uint16_t lastAdr);
+
+extern volatile uint16_t modbusDataAmount;
+extern volatile uint16_t modbusDataLocation;
+#endif

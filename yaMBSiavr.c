@@ -52,6 +52,43 @@ volatile unsigned char rxbuffer[MaxFrameIndex+1];
 volatile uint16_t DataPos = 0;
 volatile unsigned char PacketTopIndex = 7;
 volatile unsigned char modBusStaMaStates = 0;
+volatile uint16_t modbusDataAmount = 0;
+volatile uint16_t modbusDataLocation = 0;
+
+/* @brief: save address and amount
+*
+*/
+void modbusSaveLocation(void)
+{
+	modbusDataLocation=(rxbuffer[3]|(rxbuffer[2]<<8));
+	if (rxbuffer[1]==fcPresetSingleRegister || rxbuffer[1]==fcForceSingleCoil) modbusDataAmount=1;
+	else modbusDataAmount=(rxbuffer[5]|(rxbuffer[4]<<8));
+}
+
+/* @brief: returns 1 if data location adr is touched by current command
+*
+*         Arguments: - adr: address of the data object
+*
+*/
+uint8_t modbusIsInRange(uint16_t adr)
+{
+        if((modbusDataLocation <= adr) && (adr<(modbusDataLocation+modbusDataAmount)))
+                return 1;
+        return 0;
+}
+
+/* @brief: returns 1 if range of data locations is touched by current command
+*
+*         Arguments: - startAdr: address of first data object in range
+*                    - lastAdr: address of last data object in range
+*
+*/
+uint8_t modbusIsRangeInRange(uint16_t startAdr, uint16_t lastAdr)
+{
+        if(modbusIsInRange(startAdr) && modbusIsInRange(lastAdr))
+                return 1;
+        return 0;
+}
 
 uint8_t modbusGetBusState(void)
 {
@@ -114,18 +151,6 @@ uint8_t crc16(volatile uint8_t *ptrToArray,uint8_t inputSize) //A standard CRC a
 	}
 }
 
-/* @brief: copies a single or multiple words from one array of bytes to another array of bytes
-*          amount must not be bigger than 255...
-*
-*/
-void listRegisterCopy(volatile uint8_t *source, volatile uint8_t *target, uint8_t amount)
-{
-	for (uint8_t c=0; c<amount; c++)
-	{
-		*(target+c)=*(source+c);
-	}
-}
-
 /* @brief: copies a single bit from one char to another char (or arrays thereof)
 *
 *
@@ -157,13 +182,16 @@ void modbusTickTimer(void)
 			if ((modbusTimer==modbusInterCharTimeout)) {
 				BusState|=(1<<GapDetected);
 			} else if ((modbusTimer==modbusInterFrameDelayReceiveEnd)) { //end of message
-				BusState=(1<<ReceiveCompleted);
 				#if ADDRESS_MODE == MULTIPLE_ADR
                		 if (crc16(rxbuffer,DataPos-3)) { //perform crc check only. This is for multiple/all address mode.
-                	} else modbusReset();
+				modbusSaveLocation();
+				BusState=(1<<ReceiveCompleted);
+			 } else modbusReset();
 				#endif
 				#if ADDRESS_MODE == SINGLE_ADR
 				if (rxbuffer[0]==Address && crc16(rxbuffer,DataPos-3)) { //is the message for us? => perform crc check
+					modbusSaveLocation();
+					BusState=(1<<ReceiveCompleted);
 				} else modbusReset();
 				#endif
 			}
@@ -266,7 +294,7 @@ void modbusSendException(unsigned char exceptionCode)
 */
 uint16_t modbusRequestedAmount(void)
 {
-	return (rxbuffer[5]|(rxbuffer[4]<<8));
+	return modbusDataAmount;
 }
 
 /* @brief: Returns the address of the first requested data object (coils, discretes, registers)
@@ -274,7 +302,7 @@ uint16_t modbusRequestedAmount(void)
 */
 uint16_t modbusRequestedAddress(void)
 {
-	return (rxbuffer[3]|(rxbuffer[2]<<8));
+	return modbusDataLocation;
 }
 
 /* @brief: copies a single or multiple bytes from one array of bytes to an array of 16-bit-words
@@ -309,33 +337,30 @@ void modbusRegisterToInt(volatile uint8_t *inreg, volatile uint16_t *outreg, uin
 */
 uint8_t modbusExchangeRegisters(volatile uint16_t *ptrToInArray, uint16_t startAddress, uint16_t size)
 {
-	uint16_t requestedAmount = modbusRequestedAmount();
-	uint16_t requestedAdr = modbusRequestedAddress();
-	if (rxbuffer[1]==fcPresetSingleRegister) requestedAmount=1;
-	if ((requestedAdr>=startAddress) && ((startAddress+size)>=(requestedAmount+requestedAdr))) {
+	if ((modbusDataLocation>=startAddress) && ((startAddress+size)>=(modbusDataAmount+modbusDataLocation))) {
 		
 		if ((rxbuffer[1]==fcReadHoldingRegisters) || (rxbuffer[1]==fcReadInputRegisters) )
 		{
-			if ((requestedAmount*2)<=(MaxFrameIndex-4)) //message buffer big enough?
+			if ((modbusDataAmount*2)<=(MaxFrameIndex-4)) //message buffer big enough?
 			{
-				rxbuffer[2]=(unsigned char)(requestedAmount*2);
-				intToModbusRegister(ptrToInArray+(unsigned char)(requestedAdr-startAddress),rxbuffer+3,requestedAmount);
+				rxbuffer[2]=(unsigned char)(modbusDataAmount*2);
+				intToModbusRegister(ptrToInArray+(modbusDataLocation-startAddress),rxbuffer+3,modbusDataAmount);
 				modbusSendMessage(2+rxbuffer[2]);
 				return 1;
 			} else modbusSendException(ecIllegalDataValue);
 		}
 		else if (rxbuffer[1]==fcPresetMultipleRegisters)
 		{
-			if (((rxbuffer[6])>=requestedAmount*2) && ((DataPos-9)>=rxbuffer[6])) //enough data received?
+			if (((rxbuffer[6])>=modbusDataAmount*2) && ((DataPos-9)>=rxbuffer[6])) //enough data received?
 			{
-				modbusRegisterToInt(rxbuffer+7,ptrToInArray+(unsigned char)(requestedAdr-startAddress),(unsigned char)(requestedAmount));
+				modbusRegisterToInt(rxbuffer+7,ptrToInArray+(modbusDataLocation-startAddress),(unsigned char)(modbusDataAmount));
 				modbusSendMessage(5);
 				return 1;
 			} else modbusSendException(ecIllegalDataValue);//too few data bytes received
 		}
 		else if (rxbuffer[1]==fcPresetSingleRegister)
 		{
-			modbusRegisterToInt(rxbuffer+4,ptrToInArray+(unsigned char)(requestedAdr-startAddress),1);
+			modbusRegisterToInt(rxbuffer+4,ptrToInArray+(modbusDataLocation-startAddress),1);
 			modbusSendMessage(5);
 			return 1;
 		} 
@@ -356,24 +381,21 @@ uint8_t modbusExchangeRegisters(volatile uint16_t *ptrToInArray, uint16_t startA
 */
 uint8_t modbusExchangeBits(volatile uint8_t *ptrToInArray, uint16_t startAddress, uint16_t size)
 {
-	uint16_t requestedAmount = modbusRequestedAmount();
-	uint16_t requestedAdr = modbusRequestedAddress();
-	if (rxbuffer[1]==fcForceSingleCoil) requestedAmount=1;
-	if ((requestedAdr>=startAddress) && ((startAddress+size)>=(requestedAmount+requestedAdr)))
+	if ((modbusDataLocation>=startAddress) && ((startAddress+size)>=(modbusDataAmount+modbusDataLocation)))
 	{
 		if ((rxbuffer[1]==fcReadInputStatus) || (rxbuffer[1]==fcReadCoilStatus))
 		{
-			if (requestedAmount<=((MaxFrameIndex-4)*8)) //message buffer big enough?
+			if (modbusDataAmount<=((MaxFrameIndex-4)*8)) //message buffer big enough?
 			{
-				rxbuffer[2]=(requestedAmount/8);
-				if (requestedAmount%8>0)
+				rxbuffer[2]=(modbusDataAmount/8);
+				if (modbusDataAmount%8>0)
 				{
-					rxbuffer[(uint8_t)(requestedAmount/8)+3]=0x00; //fill last data byte with zeros
+					rxbuffer[(uint8_t)(modbusDataAmount/8)+3]=0x00; //fill last data byte with zeros
 					rxbuffer[2]++;
 				}
-				for (uint16_t c = 0; c<requestedAmount; c++)
+				for (uint16_t c = 0; c<modbusDataAmount; c++)
 				{
-					listBitCopy(ptrToInArray,requestedAdr-startAddress+c,rxbuffer+3,c);
+					listBitCopy(ptrToInArray,modbusDataLocation-startAddress+c,rxbuffer+3,c);
 				}
 				modbusSendMessage(rxbuffer[2]+2);
 				return 1;
@@ -381,18 +403,18 @@ uint8_t modbusExchangeBits(volatile uint8_t *ptrToInArray, uint16_t startAddress
 		}
 		else if (rxbuffer[1]==fcForceMultipleCoils)
 		{
-			if (((rxbuffer[6]*8)>=requestedAmount) && ((DataPos-9)>=rxbuffer[6])) //enough data received?
+			if (((rxbuffer[6]*8)>=modbusDataAmount) && ((DataPos-9)>=rxbuffer[6])) //enough data received?
 			{
-				for (uint16_t c = 0; c<requestedAmount; c++)
+				for (uint16_t c = 0; c<modbusDataAmount; c++)
 				{
-					listBitCopy(rxbuffer+7,c,ptrToInArray,requestedAdr-startAddress+c);
+					listBitCopy(rxbuffer+7,c,ptrToInArray,modbusDataLocation-startAddress+c);
 				}
 				modbusSendMessage(5);
 				return 1;
 			} else modbusSendException(ecIllegalDataValue);//exception too few data bytes received
 		}
 		else if (rxbuffer[1]==fcForceSingleCoil) {
-			listBitCopy(rxbuffer+4,0,ptrToInArray,requestedAdr-startAddress);
+			listBitCopy(rxbuffer+4,0,ptrToInArray,modbusDataLocation-startAddress);
 			modbusSendMessage(5); 
 			return 1;
 		}
