@@ -144,6 +144,16 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #define UART_DATA     UDR
 #define UART_UDRIE    UDRIE
 
+#elif defined(__AVR_AT90PWM3B__)
+#define UART_TRANSMIT_COMPLETE_INTERRUPT USART_TX_vect
+#define UART_RECEIVE_INTERRUPT   USART_RX_vect
+#define UART_TRANSMIT_INTERRUPT  USART_UDRE_vect
+#define UART_STATUS   UCSRA
+#define UART_CONTROL  UCSRB
+#define UART_DATA     UDR
+#define UART_UDRIE    UDRIE
+
+
 #else
 #error "no definition available"
 #endif
@@ -151,7 +161,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef F_CPU
 #error " F_CPU not defined "
 #else
-   #define UBRR (F_CPU / 8 / BAUD ) -1 
+   #define _UBRR (F_CPU / 8 / BAUD ) -1
 #endif /* F_CPU */
 /*
  * Available address modes.
@@ -174,7 +184,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 /*
 #define modbusBaudrate 38400
 #define modbusBlocksize 10
-#define modbusBlockTime ((float)modbusBlocksize*1000000)/((float) modbusBaudrate) //is 260 für 38400
+#define modbusBlockTime ((float)modbusBlocksize*1000000)/((float) modbusBaudrate) //is 260 fï¿½r 38400
 #define timerISROccurenceTime 102
 
 #define TimeoutStartOfMessage  (uint16_t)(modbusBlockTime*3.5/(float)timerISROccurenceTime)
@@ -294,7 +304,7 @@ void modbusReset(void);
 extern uint8_t modbusGetBusState(void);
 
 /**
- * @brief    Call every 100µs using a timer ISR.
+ * @brief    Call every 100ï¿½s using a timer ISR.
  */
 extern void modbusTickTimer(void);
 
