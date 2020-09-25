@@ -51,14 +51,24 @@ THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 /* define baudrate of modbus */
-#define BAUD 38400L 
+#ifndef BAUD
+#define BAUD 38400L
+#endif
 
 /*
 * Definitions for transceiver enable pin.
 */
+#ifndef TRANSCEIVER_ENABLE_PORT
 #define TRANSCEIVER_ENABLE_PORT PORTD
+#endif
+
+#ifndef TRANSCEIVER_ENABLE_PIN
 #define TRANSCEIVER_ENABLE_PIN 2
+#endif
+
+#ifndef TRANSCEIVER_ENABLE_PORT_DDR
 #define TRANSCEIVER_ENABLE_PORT_DDR DDRD
+#endif
 
 /**
  * @brief    
