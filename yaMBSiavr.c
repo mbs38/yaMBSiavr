@@ -194,7 +194,7 @@ void modbusTickTimer(void)
 					BusState=(1<<ReceiveCompleted);
 				} else modbusReset();
 				#endif
-			}	
+			}
 		} else if (modbusTimer==modbusInterFrameDelayReceiveStart) BusState|=(1<<BusTimedOut);
 	}
 }
@@ -242,8 +242,8 @@ ISR(UART_TRANSMIT_COMPLETE_INTERRUPT)
 
 void modbusInit(void)
 {
-	UBRRH = (unsigned char)((UBRR) >> 8);
-	UBRRL = (unsigned char) UBRR;
+	UBRRH = (unsigned char)((_UBRR) >> 8);
+	UBRRL = (unsigned char) _UBRR;
 	UART_STATUS = (1<<U2X); //double speed mode.
 #ifdef URSEL   // if UBRRH and UCSRC share the same I/O location , e.g. ATmega8
 	UCSRC = (1<<URSEL)|(3<<UCSZ0); //Frame Size
