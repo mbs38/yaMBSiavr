@@ -175,6 +175,23 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #define UART_DATA     UDR
 #define UART_UDRIE    UDRIE
 
+#elif defined(__AVR_ATmega1284P__)
+#define UART_TRANSMIT_COMPLETE_INTERRUPT USART0_TX_vect
+#define UART_RECEIVE_INTERRUPT   USART0_RX_vect
+#define UART_TRANSMIT_INTERRUPT  USART0_UDRE_vect
+#define UART_STATUS   UCSR0A
+#define UART_CONTROL  UCSR0B
+#define UART_DATA     UDR0
+#define UART_UDRIE    UDRIE0
+#define UCSRC UCSR0C
+#define RXCIE RXCIE0
+#define TXCIE TXCIE0
+#define RXEN RXEN0
+#define TXEN TXEN0
+#define UCSZ0 UCSZ00
+#define U2X U2X0
+#define UBRRH UBRR0H
+#define UBRRL UBRR0L
 
 #else
 #error "no definition available"
