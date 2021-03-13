@@ -51,14 +51,24 @@ THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 /* define baudrate of modbus */
-#define BAUD 38400L 
+#ifndef BAUD
+#define BAUD 38400L
+#endif
 
 /*
 * Definitions for transceiver enable pin.
 */
+#ifndef TRANSCEIVER_ENABLE_PORT
 #define TRANSCEIVER_ENABLE_PORT PORTD
+#endif
+
+#ifndef TRANSCEIVER_ENABLE_PIN
 #define TRANSCEIVER_ENABLE_PIN 2
+#endif
+
+#ifndef TRANSCEIVER_ENABLE_PORT_DDR
 #define TRANSCEIVER_ENABLE_PORT_DDR DDRD
+#endif
 
 /**
  * @brief    
@@ -156,6 +166,16 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #define UART_DATA     UDR
 #define UART_UDRIE    UDRIE
 
+#elif defined(__AVR_AT90PWM3B__)
+#define UART_TRANSMIT_COMPLETE_INTERRUPT USART_TX_vect
+#define UART_RECEIVE_INTERRUPT   USART_RX_vect
+#define UART_TRANSMIT_INTERRUPT  USART_UDRE_vect
+#define UART_STATUS   UCSRA
+#define UART_CONTROL  UCSRB
+#define UART_DATA     UDR
+#define UART_UDRIE    UDRIE
+
+
 #else
 #error "no definition available"
 #endif
@@ -163,7 +183,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef F_CPU
 #error " F_CPU not defined "
 #else
-   #define UBRR (F_CPU / 8 / BAUD ) -1 
+   #define _UBRR (F_CPU / 8 / BAUD ) -1
 #endif /* F_CPU */
 /*
  * Available address modes.
