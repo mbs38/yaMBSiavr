@@ -183,19 +183,19 @@ THE POSSIBILITY OF SUCH DAMAGE.
 */
 #define PHYSICAL_TYPE 485 //possible values: 485, 232
 
-/*
-#define modbusBaudrate 38400
-#define modbusBlocksize 10
-#define modbusBlockTime ((float)modbusBlocksize*1000000)/((float) modbusBaudrate) //is 260 for 38400
-#define timerISROccurenceTime 102
 
-#define TimeoutStartOfMessage  (uint16_t)(modbusBlockTime*3.5/(float)timerISROccurenceTime)
-#define TimeoutEndOfMessage (uint16_t)(modbusBlockTime*4/(float)timerISROccurenceTime)
-#define ReceiveMaxGap  (uint16_t)(modbusBlockTime*1.5/(float)timerISROccurenceTime)
-*/
+#if BAUD>=19200
 #define modbusInterFrameDelayReceiveStart 16
 #define modbusInterFrameDelayReceiveEnd 18
 #define modbusInterCharTimeout 7
+#else
+#define modbusBlocksize 10
+#define modbusBlockTime ((float)modbusBlocksize*1000000)/((float) BAUD) //is 260 for 38400
+#define timerISROccurenceTime 100 //time in microseconds between two calls of modbusTickTimer
+#define modbusInterFrameDelayReceiveStart  (uint16_t)(modbusBlockTime*3.5/(float)timerISROccurenceTime)
+#define modbusInterFrameDelayReceiveEnd (uint16_t)(modbusBlockTime*4/(float)timerISROccurenceTime)
+#define modbusInterCharTimeout  (uint16_t)(modbusBlockTime*1.5/(float)timerISROccurenceTime)
+#endif
 
 /**
  * @brief    Defines the maximum Modbus frame size accepted by the device. 255 is the default
