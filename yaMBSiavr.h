@@ -291,12 +291,12 @@ extern void modbusInit(void);
 /**
 * @brief    receive/transmit data array
 */
-volatile unsigned char rxbuffer[MaxFrameIndex+1];
+extern volatile unsigned char rxbuffer[MaxFrameIndex+1];
 
 /**
 * @brief    Current receive/transmit position
 */
-volatile uint16_t DataPos;
+extern volatile uint16_t DataPos;
 
 /**
  * This only applies to single address mode.
