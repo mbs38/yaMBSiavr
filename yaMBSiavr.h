@@ -55,6 +55,10 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #define BAUD 38400L
 #endif
 
+#define MODBUS_DEV_VENDOR "Your Company"
+#define MODBUS_DEV_PRODUCT "Your Device Name"
+#define MODBUS_DEV_VERSION "V0.1beta"
+
 /*
 * Definitions for transceiver enable pin.
 */
@@ -256,6 +260,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #define fcForceMultipleCoils 15 //write multiple bits
 #define fcPresetMultipleRegisters 16 //write multiple analog output registers (2 Bytes each)
 #define fcReportSlaveID 17 //read device description, run status and other device specific information
+#define fcEncapsulatedInterfaceTransport 43 //device identification
 
 /**
  * @brief    Modbus Exception Codes
@@ -381,6 +386,8 @@ extern uint8_t modbusExchangeBits(volatile uint8_t *ptrToInArray, uint16_t start
 */
 extern uint8_t modbusExchangeRegisters(volatile uint16_t *ptrToInArray, uint16_t startAddress, uint16_t size);
 
+uint8_t modbusExchangeString(volatile char* str, uint8_t size);
+
 /* @brief: returns 1 if data location adr is touched by current command
 *
 *         Arguments: - adr: address of the data object
@@ -398,4 +405,6 @@ extern uint8_t modbusIsRangeInRange(uint16_t startAdr, uint16_t lastAdr);
 
 extern volatile uint16_t modbusDataAmount;
 extern volatile uint16_t modbusDataLocation;
+
+void modbusHandleDeviceId();
 #endif
