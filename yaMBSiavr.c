@@ -426,3 +426,31 @@ uint8_t modbusExchangeBits(volatile uint8_t *ptrToInArray, uint16_t startAddress
 		return 0;
 	}
 }
+
+uint8_t modbusCopyMeiObj(volatile unsigned char* buff, uint8_t obj_id, const __flash char* obj_str, uint8_t obj_len)
+{
+    obj_len--; // modbus ignores the null-termination
+    *buff++ = obj_id;
+    *buff++ = obj_len;
+    for(uint8_t i = 0; i < obj_len; i++)
+    {
+        *buff++ = *obj_str++;
+    }
+    return obj_len + 2;
+}
+
+void modbusHandleDeviceId()
+{
+    rxbuffer[4] = 0x01; // conformity level
+    rxbuffer[5] = 0x00; // more follows: no
+    rxbuffer[6] = 0x00; // next object id: none
+    rxbuffer[7] = 0x03; // number of objects
+    
+    uint8_t offset = 8;
+
+    offset += modbusCopyMeiObj(&rxbuffer[offset], 0, modbus_dev_vendor, sizeof(modbus_dev_vendor));
+    offset += modbusCopyMeiObj(&rxbuffer[offset], 1, modbus_dev_product, sizeof(modbus_dev_product));
+    offset += modbusCopyMeiObj(&rxbuffer[offset], 2, modbus_dev_version, sizeof(modbus_dev_version));
+
+    modbusSendMessage(offset - 1);
+}
