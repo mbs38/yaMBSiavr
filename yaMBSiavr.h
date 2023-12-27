@@ -51,8 +51,8 @@ THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 /* define baudrate of modbus */
-#ifndef BAUD
-#define BAUD 38400L
+#ifndef MODBUS_BAUDRATE
+#define MODBUS_BAUDRATE 38400L
 #endif
 
 /*
@@ -207,8 +207,10 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #define UART_RECEIVE_INTERRUPT   USART0_RXC_vect
 #define UART_TRANSMIT_INTERRUPT  USART0_DRE_vect
 #define UART_CONTROL  USART0.CTRLA
-#define UART_DATA_TX     USART0.TXDATAL
-#define UART_DATA_RX     USART0.RXDATAL
+#define UART_CONTROLB  USART0.CTRLB
+#define UART_STATUS   USART0.STATUS
+#define UART_DATA_TX  USART0.TXDATAL
+#define UART_DATA_RX  USART0.RXDATAL
 #define UART_UDRIE    USART_DREIE_bp
 #define RXEN USART_RXEN_bp
 #define TXEN USART_TXEN_bp
@@ -221,7 +223,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef F_CPU
 #error " F_CPU not defined "
 #else
-   #define _UBRR (F_CPU / 8 / BAUD ) -1
+   #define _UBRR (F_CPU / 8 / MODBUS_BAUDRATE ) -1
 #endif /* F_CPU */
 /*
  * Available address modes.
@@ -242,7 +244,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #define PHYSICAL_TYPE 485 //possible values: 485, 232
 
 
-#if BAUD>=19200
+#if MODBUS_BAUDRATE>=19200
 #define modbusInterFrameDelayReceiveStart 16
 #define modbusInterFrameDelayReceiveEnd 18
 #define modbusInterCharTimeout 7
