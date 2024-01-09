@@ -51,8 +51,8 @@ THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 /* define baudrate of modbus */
-#ifndef BAUD
-#define BAUD 38400L
+#ifndef MODBUS_BAUDRATE
+#define MODBUS_BAUDRATE 38400L
 #endif
 
 /*
@@ -82,7 +82,8 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #define UART_TRANSMIT_INTERRUPT  USART_UDRE_vect
 #define UART_STATUS   UCSRA
 #define UART_CONTROL  UCSRB
-#define UART_DATA     UDR
+#define UART_DATA_TX     UDR
+#define UART_DATA_RX     UDR
 #define UART_UDRIE    UDRIE
 
 #elif defined(__AVR_ATmega164P__)
@@ -91,7 +92,8 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #define UART_TRANSMIT_INTERRUPT  USART1_UDRE_vect
 #define UART_STATUS   UCSR1A
 #define UART_CONTROL  UCSR1B
-#define UART_DATA     UDR1
+#define UART_DATA_TX     UDR1
+#define UART_DATA_RX     UDR1
 #define UART_UDRIE    UDRIE1
 #define UCSRC UCSR1C
 #define RXCIE RXCIE1
@@ -109,7 +111,8 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #define UART_TRANSMIT_INTERRUPT  USART_UDRE_vect
 #define UART_STATUS   UCSR0A
 #define UART_CONTROL  UCSR0B
-#define UART_DATA     UDR0
+#define UART_DATA_TX     UDR0
+#define UART_DATA_RX     UDR0
 #define UART_UDRIE    UDRIE0
 #define UCSRC UCSR0C
 #define RXCIE RXCIE0
@@ -127,7 +130,8 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #define UART_TRANSMIT_INTERRUPT  USART0_UDRE_vect
 #define UART_STATUS   UCSR0A
 #define UART_CONTROL  UCSR0B
-#define UART_DATA     UDR0
+#define UART_DATA_TX     UDR0
+#define UART_DATA_RX     UDR0
 #define UART_UDRIE    UDRIE0
 #define UCSRC UCSR0C
 #define RXCIE RXCIE0
@@ -145,7 +149,8 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #define UART_TRANSMIT_INTERRUPT  USART0_UDRE_vect
 #define UART_STATUS   UCSR0A
 #define UART_CONTROL  UCSR0B
-#define UART_DATA     UDR0
+#define UART_DATA_TX     UDR0
+#define UART_DATA_RX     UDR0
 #define UART_UDRIE    UDRIE0
 #define UCSRC UCSR0C
 #define RXCIE RXCIE0
@@ -163,7 +168,8 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #define UART_TRANSMIT_INTERRUPT  USART_UDRE_vect
 #define UART_STATUS   UCSRA
 #define UART_CONTROL  UCSRB
-#define UART_DATA     UDR
+#define UART_DATA_TX     UDR
+#define UART_DATA_RX     UDR
 #define UART_UDRIE    UDRIE
 
 #elif defined(__AVR_AT90PWM3B__)
@@ -172,7 +178,8 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #define UART_TRANSMIT_INTERRUPT  USART_UDRE_vect
 #define UART_STATUS   UCSRA
 #define UART_CONTROL  UCSRB
-#define UART_DATA     UDR
+#define UART_DATA_TX     UDR
+#define UART_DATA_RX     UDR
 #define UART_UDRIE    UDRIE
 
 #elif defined(__AVR_ATmega1284P__)
@@ -181,7 +188,8 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #define UART_TRANSMIT_INTERRUPT  USART0_UDRE_vect
 #define UART_STATUS   UCSR0A
 #define UART_CONTROL  UCSR0B
-#define UART_DATA     UDR0
+#define UART_DATA_TX     UDR0
+#define UART_DATA_RX     UDR0
 #define UART_UDRIE    UDRIE0
 #define UCSRC UCSR0C
 #define RXCIE RXCIE0
@@ -193,6 +201,21 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #define UBRRH UBRR0H
 #define UBRRL UBRR0L
 
+#elif defined(__AVR_ATtiny816__) || defined(__AVR_ATtiny1616__)
+#define MODBUS_AVR_TINYX1
+#define UART_TRANSMIT_COMPLETE_INTERRUPT USART0_TXC_vect
+#define UART_RECEIVE_INTERRUPT   USART0_RXC_vect
+#define UART_TRANSMIT_INTERRUPT  USART0_DRE_vect
+#define UART_CONTROL  USART0.CTRLA
+#define UART_CONTROLB  USART0.CTRLB
+#define UART_STATUS   USART0.STATUS
+#define UART_DATA_TX  USART0.TXDATAL
+#define UART_DATA_RX  USART0.RXDATAL
+#define UART_UDRIE    USART_DREIE_bp
+#define RXEN USART_RXEN_bp
+#define TXEN USART_TXEN_bp
+#define MODBUS_BAUD USART0.BAUD
+
 #else
 #error "no definition available"
 #endif
@@ -200,7 +223,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef F_CPU
 #error " F_CPU not defined "
 #else
-   #define _UBRR (F_CPU / 8 / BAUD ) -1
+   #define _UBRR (F_CPU / 8 / MODBUS_BAUDRATE ) -1
 #endif /* F_CPU */
 /*
  * Available address modes.
@@ -221,13 +244,13 @@ THE POSSIBILITY OF SUCH DAMAGE.
 #define PHYSICAL_TYPE 485 //possible values: 485, 232
 
 
-#if BAUD>=19200
+#if MODBUS_BAUDRATE>=19200
 #define modbusInterFrameDelayReceiveStart 16
 #define modbusInterFrameDelayReceiveEnd 18
 #define modbusInterCharTimeout 7
 #else
 #define modbusBlocksize 10
-#define modbusBlockTime ((float)modbusBlocksize*1000000)/((float) BAUD) //is 260 for 38400
+#define modbusBlockTime ((float)modbusBlocksize*1000000)/((float) MODBUS_BAUDRATE) //is 260 for 38400
 #define timerISROccurenceTime 100 //time in microseconds between two calls of modbusTickTimer
 #define modbusInterFrameDelayReceiveStart  (uint16_t)(modbusBlockTime*3.5/(float)timerISROccurenceTime)
 #define modbusInterFrameDelayReceiveEnd (uint16_t)(modbusBlockTime*4/(float)timerISROccurenceTime)
