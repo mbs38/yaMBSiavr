@@ -235,7 +235,7 @@ ISR(UART_TRANSMIT_INTERRUPT)
 ISR(UART_TRANSMIT_COMPLETE_INTERRUPT)
 {
 #ifdef MODBUS_AVR_TINYX1
-	USART_STATUS = 1<<USART_TXCIE_bp;
+	UART_STATUS = 1<<USART_TXCIE_bp;
 #endif
 	#if PHYSICAL_TYPE == 485
 	transceiver_rxen();
@@ -275,6 +275,7 @@ void modbusInit(void)
 	UCSRC = (1<<URSEL)|(3<<UCSZ0); //Frame Size
 #else
 	UCSRC = (3<<UCSZ0); //Frame Size
+#endif
 	UART_CONTROL = (1<<TXCIE)|(1<<RXCIE)|(1<<RXEN)|(1<<TXEN); // USART receiver and transmitter and receive complete interrupt
 #endif
 	
