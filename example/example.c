@@ -116,6 +116,10 @@ void modbusGet(void) {
 				modbusExchangeRegisters(holdingRegisters,0,4);
 			}
 			break;
+			case fcEncapsulatedInterfaceTransport:
+			{
+				modbusHandleDeviceId();
+			}
 			
 			default: {
 				modbusSendException(ecIllegalFunction);
