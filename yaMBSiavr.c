@@ -202,7 +202,7 @@ void modbusTickTimer(void)
 ISR(UART_RECEIVE_INTERRUPT)
 {
 	unsigned char data;
-	data = UART_DATA;
+	data = UART_DATA_RX;
 	modbusTimer=0; //reset timer
 	if (!(BusState & (1<<ReceiveCompleted)) && !(BusState & (1<<TransmitRequested)) && !(BusState & (1<<Transmitting)) && (BusState & (1<<Receiving)) && !(BusState & (1<<BusTimedOut)))
 	{
@@ -225,7 +225,7 @@ ISR(UART_TRANSMIT_INTERRUPT)
 {
 	BusState&=~(1<<TransmitRequested);
 	BusState|=(1<<Transmitting);
-	UART_DATA=rxbuffer[DataPos];
+	UART_DATA_TX=rxbuffer[DataPos];
 	DataPos++;
 	if (DataPos==(PacketTopIndex+1)) {
 		UART_CONTROL&=~(1<<UART_UDRIE);
@@ -234,23 +234,51 @@ ISR(UART_TRANSMIT_INTERRUPT)
 
 ISR(UART_TRANSMIT_COMPLETE_INTERRUPT)
 {
+#ifdef MODBUS_AVR_TINYX1
+	UART_STATUS = 1<<USART_TXCIE_bp;
+#endif
 	#if PHYSICAL_TYPE == 485
 	transceiver_rxen();
 	#endif
 	modbusReset();
 }
 
+#define AVRTX1_USART0_BAUD_RATE(BAUD_RATE) ((float)(F_CPU * 64 / (16 * (float)(BAUD_RATE))) + 0.5)
 void modbusInit(void)
 {
+#ifdef MODBUS_AVR_TINYX1
+	MODBUS_BAUD = (uint16_t)(AVRTX1_USART0_BAUD_RATE(MODBUS_BAUDRATE));
+
+	UART_CONTROL = 0
+		| 0 << USART_ABEIE_bp   /* Auto-baud Error Interrupt Enable: disabled */
+		| 0 << USART_DREIE_bp  /* Data Register Empty Interrupt Enable: disabled */
+		| 0 << USART_LBME_bp   /* Loop-back Mode Enable: disabled */
+		| USART_RS485_OFF_gc   /* RS485 Mode disabled */
+		| 1 << USART_RXCIE_bp  /* Receive Complete Interrupt Enable: enabled */
+		| 0 << USART_RXSIE_bp  /* Receiver Start Frame Interrupt Enable: disabled */
+		| 1 << USART_TXCIE_bp; /* Transmit Complete Interrupt Enable: disabled */
+
+	UART_CONTROLB = 0
+		| 0 << USART_MPCM_bp     /* Multi-processor Communication Mode: disabled */
+		| 0 << USART_ODME_bp     /* Open Drain Mode Enable: disabled */
+		| 1 << USART_RXEN_bp     /* Receiver enable: disabled */
+		| USART_RXMODE_NORMAL_gc /* Normal mode */
+		| 0 << USART_SFDEN_bp    /* Start Frame Detection Enable: disabled */
+		| 1 << USART_TXEN_bp;    /* Transmitter Enable: enabled */
+
+#else
 	UBRRH = (unsigned char)((_UBRR) >> 8);
 	UBRRL = (unsigned char) _UBRR;
 	UART_STATUS = (1<<U2X); //double speed mode.
+
 #ifdef URSEL   // if UBRRH and UCSRC share the same I/O location , e.g. ATmega8
 	UCSRC = (1<<URSEL)|(3<<UCSZ0); //Frame Size
 #else
-   UCSRC = (3<<UCSZ0); //Frame Size
+	UCSRC = (3<<UCSZ0); //Frame Size
 #endif
 	UART_CONTROL = (1<<TXCIE)|(1<<RXCIE)|(1<<RXEN)|(1<<TXEN); // USART receiver and transmitter and receive complete interrupt
+#endif
+	
 	#if PHYSICAL_TYPE == 485
 	TRANSCEIVER_ENABLE_PORT_DDR|=(1<<TRANSCEIVER_ENABLE_PIN);
 	transceiver_rxen();
